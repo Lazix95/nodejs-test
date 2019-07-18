@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const pricing = require('./../utils/pricingPackage');
 
 const User = require('../models/user');
+const Staff = require('./../models/staff')
 const QRcode = require('./../models/QRcode');
 
 
@@ -31,14 +32,6 @@ exports.signup = async (req, res, next) => {
          QRcode.insertMany(qrCodes);
          next()
       }
-     /* const userData = {
-         restaurant_id: saveUser._id.toString(),
-         fullName: saveUser.fullName,
-         restaurantName: saveUser.restaurantName,
-         email: saveUser.email
-      };
-
-      res.status(201).json({message: 'User created', userData: userData})*/
    } catch (err) {
       if (!err.statusCode) {
          err.statusCode = 500
@@ -52,7 +45,11 @@ exports.login = async (req, res, next) => {
       const tokenExpiresIn = 3600; // Time in seconds!
       const email = req.body.email;
       const password = req.body.password;
-      const user = await User.findOne({email: email});
+      let user = await User.findOne({email: email});
+
+      if(!user){
+         user = await Staff.findOne({email: email})
+      }
 
       if (!user) {
          const error = new Error('A user with this email is not found');
@@ -69,17 +66,18 @@ exports.login = async (req, res, next) => {
 
       const token = jwt.sign({
          email: user.email,
-         userId: user._id.toString()
+         userId: user._id.toString(),
+         restaurantId:  user.staff ? user.restaurantId.toString() : user._id.toString(),
       }, 'SuperSecretCode', {expiresIn: tokenExpiresIn + 's'});
 
       const userData = {
-         restaurant_id: user._id.toString(),
+         restaurant_id:  user.staff ? restaurantId : user._id.toString(),
          fullName: user.fullName,
          restaurantName: user.restaurantName,
          email: user.email
       };
-
-      res.status(200).json({token: token, expires:tokenExpiresIn, userData: userData})
+      const staff = user.staff ? user.staff : ''
+      res.status(200).json({token: token, expires:tokenExpiresIn, staff: staff, userData: userData})
    } catch (err) {
       if (!err.statusCode) {
          err.statusCode = 500

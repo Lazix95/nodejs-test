@@ -22,5 +22,6 @@ module.exports = (req, res, next) => {
    }
    console.log(decodetToken);
    req.userId = decodetToken.userId;
+   req.restaurantId = decodetToken.restaurantId
    next();
 };

@@ -6,9 +6,14 @@ const staffSchema = Schema({
     type: String,
     required: true
   },
-  email: {
+  restaurantName: {
     type: String,
     required: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true
   },
   password: {
     type: String,
@@ -17,7 +22,11 @@ const staffSchema = Schema({
   restaurantId: {
     type: Schema.Types.ObjectId,
     required: true
+  },
+  staff: {
+    type: Boolean,
+    default: true
   }
 });
 
-module.exports = mongoose.model('Order', staffSchema);
+module.exports = mongoose.model('Staff', staffSchema);

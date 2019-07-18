@@ -8,7 +8,7 @@ router.get('/orders', isAuth, ordersController.getOrders);
 
 router.post('/orders', isAuth, ordersController.postOrder);
 
-router.patch('/orders', isAuth, ordersController.patchOrder);
+router.patch('/orders/:id', isAuth, ordersController.patchOrder);
 
 router.put('/orders', isAuth, ordersController.putOrder);
 

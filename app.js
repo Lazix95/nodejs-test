@@ -12,6 +12,7 @@ const categoriesRoutes = require('./routes/categories');
 const productsRouter = require('./routes/products');
 const qrRouter = require('./routes/qrCodes');
 const ordersRouter = require('./routes/orders');
+const staffRouter = require('./routes/staff');
 
 const app = express();
 
@@ -58,7 +59,8 @@ app.use('/', userRouts);
 app.use('/', categoriesRoutes);
 app.use('/', productsRouter);
 app.use('/', qrRouter);
-app.use('/', ordersRouter)
+app.use('/', ordersRouter);
+app.use('/', staffRouter);
 
 app.use((error, req, res, next) => {
    console.log(error);
@@ -69,7 +71,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-   .connect('mongodb://localhost:27017/messages', {useNewUrlParser: true})
+   .connect('mongodb://localhost:27017/messages', {useNewUrlParser: true, useCreateIndex: true})
    .then(result => {
       const server = app.listen(8080);
       const io = require('./socket').init(server);

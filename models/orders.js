@@ -7,13 +7,22 @@ const ordersSchema = Schema({
       type: Boolean,
       default: false
    },
-   qty: {
-      type: Number,
-      default: 1
+   tableNumber: {
+      type: String,
+      required: true
+   },
+   orderNumber: {
+      type: Number
    },
    products: [{
-      type: Schema.Types.ObjectId,
-      ref: 'Product'
+      product: {
+         type: Schema.Types.ObjectId,
+         ref: 'Product'
+      },
+      qty: {
+         type: Number,
+         default: 1
+      },
    }],
    user: {
       type: Schema.Types.ObjectId,

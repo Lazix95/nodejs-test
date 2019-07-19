@@ -71,7 +71,7 @@ exports.login = async (req, res, next) => {
       }, 'SuperSecretCode', {expiresIn: tokenExpiresIn + 's'});
 
       const userData = {
-         restaurant_id:  user.staff ? restaurantId : user._id.toString(),
+         restaurant_id:  user.staff ? user.restaurantId : user._id.toString(),
          fullName: user.fullName,
          restaurantName: user.restaurantName,
          email: user.email

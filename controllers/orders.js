@@ -4,8 +4,9 @@ const io = require('./../socket');
 //getOrders
 exports.getOrders = async (req, res, next) => {
    try {
-      const userId = req.body.restaurantId ? req.body.restaurantId : req.userId;
-      const orders = await Order.find({user: userId})
+      const userId = req.userId;
+      const restaurantId = req.restaurantId
+      const orders = await Order.find({user: restaurantId})
       .populate({path: 'products.product', select:'category name price', populate: {path:'category', model:'Category', select: 'name'}});
       res.status(200).json(orders)
    } catch (err) {
@@ -49,17 +50,17 @@ exports.postOrder = async (req, res, next) => {
 // Accept Orders
 exports.patchOrder = async (req, res, next) => {
    try {
-      const userId = req.body.restaurantId ? req.body.restaurantId : req.userId;
+      const userId = req.userId;
       const restaurantId = req.restaurantId;
       const tableNumber = req.body.tableNumber;
       const orderId = req.params.id;
+      let deleted = false;
       let acceptedOrder = await Order.findOne({user: restaurantId, tableNumber:tableNumber, accepted: true});
       let order = await Order.findById(orderId)
-      console.log('oderr one ) )==', order, acceptedOrder)
      if(acceptedOrder) {
-      console.log('Merge Products ======================== ', )
-      acceptedOrder.products = mergeProducts([...acceptedOrder.products, ...order.products])
+      acceptedOrder.products = await mergeProducts([...acceptedOrder.products, ...order.products])
       await order.remove()
+      deleted = true;
       await acceptedOrder.save()
       acceptedOrder = await Order.findById(acceptedOrder._id)
       .populate({path: 'products.product', select:'category name price', populate: {path:'category', model:'Category', select: 'name'}});
@@ -69,8 +70,7 @@ exports.patchOrder = async (req, res, next) => {
         acceptedOrder = await Order.findById(orderId)
         .populate({path: 'products.product', select:'category name price', populate: {path:'category', model:'Category', select: 'name'}});
      }
-   
-     // io.getIO().emit('orderAccepted', order);
+     io.getIO().sockets.in(restaurantId).emit('orderAccepted', {acceptedOrder: acceptedOrder, reqOrder: order, deleted: deleted});
       res.status(200).json(acceptedOrder)
    } catch (err) {
       if (!err.statusCode) err.statusCode = 500;
@@ -82,10 +82,12 @@ exports.patchOrder = async (req, res, next) => {
 // Delete orders when they are finished
 exports.putOrder = async (req, res, next) => {
    try {
-      const userId = req.body.restaurantId ? req.body.restaurantId : req.userId;
-      let order = await Order.findById(orderId);
-      order = await order.remove();
-      io.getIO().emit('orderFinished', order);
+      const userId = req.userId;
+      const restaurantId = req.restaurantId
+      const orderId = req.params.id; 
+      const order = await Order.findById(orderId);
+      await order.remove();
+      io.getIO().sockets.in(restaurantId).emit('orderFinished', order);
       res.status(201).json({message:'Order finished!'})
    } catch (err) {
       if (!err.statusCode) err.statusCode = 500;
@@ -94,19 +96,35 @@ exports.putOrder = async (req, res, next) => {
    }
 };
 
+exports.deleteOrder = async (req, res, next) => {
+   const restaurantId = req.restaurantId;
+   const orderId = req.params.id;
+   const order = await Order.findById(orderId)
+   await order.remove()
+   io.getIO().sockets.in(restaurantId).emit('orderRejected', order);
+   res.status(200).json({message: 'Order ' + orderId + ' rejected.'})
+} 
+
 const mergeProducts = (products) => {
+  return new Promise((resolve, reject) => {
    const passedElems = [];
    const arrayToReturn = [];
    for(let i = 0; i < products.length; i++) {
       let elem = products[i];
-      if(passedElems.filter(el => el.product.toString() == elem.product.toString()).length > 0) break
+      let elemToPush = null;
+      if(passedElems.filter(el => el.product.toString() == elem.product.toString()).length > 0) continue
       passedElems.push(elem)
       const filtered = products.filter(obj => obj.product.toString() == elem.product.toString())
-      const elemToPush = {_id: filtered[0]._id, qty: 0, product: filtered[0].product}
-      filtered.forEach(filtElm => {
+      if(filtered.length >  0){
+         elemToPush = {qty: 0, product: filtered[0].product}
+         filtered.forEach(filtElm => {
          elemToPush.qty += filtElm.qty
-      })
+         })
+      } else {
+         elemToPush = elem
+      }
       arrayToReturn.push(elemToPush)
    };
-   return arrayToReturn
+   resolve(arrayToReturn)
+  })
 }

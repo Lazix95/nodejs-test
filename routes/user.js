@@ -8,6 +8,6 @@ const {emailValidation, passwordValidation, changePaswordvalidation} = require('
 const {handleValidationResults} = require('./../utils/validationResultHandler');
 
 router.get('/user', isAuth, userController.getUser);
-router.put('/user', isAuth, changePaswordvalidation(), emailValidation(), handleValidationResults, userController.putUser);
+router.put('/user', isAuth, changePaswordvalidation(), handleValidationResults, userController.putUser);
 
 module.exports = router;

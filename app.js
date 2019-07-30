@@ -16,6 +16,35 @@ const staffRouter = require('./routes/staff');
 
 const app = express();
 
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
+const swaggerDefinition = {
+  info: {
+    title: 'Example Swagger API',
+    version: '1.0.0',
+    description: 'This is the Example API documentation and is using the OpenAPI spec.',
+  },
+  securityDefinitions: {
+      jwt: {
+        type: 'apiKey',
+        name: 'Authorization',
+        in: 'header',
+      },
+    },
+  host: `localhost:8080`,
+  basePath: '/',
+};
+
+
+// options for swagger jsdoc 
+const swaggerOptions = {
+  swaggerDefinition: swaggerDefinition, // swagger definition
+  apis: ['./routes/docs/*.js']
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+
 const fileStorage = multer.diskStorage({
    destination: (req, file, cb) => {
       cb(null, 'images');
@@ -62,6 +91,8 @@ app.use('/', qrRouter);
 app.use('/', ordersRouter);
 app.use('/', staffRouter);
 
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use((error, req, res, next) => {
    console.log(error);
    const status = error.statusCode || 500;
@@ -71,9 +102,9 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-   .connect('mongodb://localhost:27017/messages', {useNewUrlParser: true, useCreateIndex: true})
+   .connect('mongodb+srv://lazix95:root@cluster0-xycak.mongodb.net/foodOrder?retryWrites=true&w=majority', {useNewUrlParser: true, useCreateIndex: true})
    .then(result => {
-      const server = app.listen(8080);
+      const server = app.listen(process.env.PORT || 8080);
       const io = require('./socket').init(server);
       io.sockets.on('connection', function(socket) {
          // once a client has connected, we expect to get a ping from them saying what room they want to join

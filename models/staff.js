@@ -7,8 +7,7 @@ const staffSchema = Schema({
     required: true
   },
   restaurantName: {
-    type: String,
-    required: true
+    type: String
   },
   email: {
     type: String,
@@ -21,6 +20,7 @@ const staffSchema = Schema({
   },
   restaurantId: {
     type: Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   staff: {

@@ -9,6 +9,11 @@ const qrcodeSchema = Schema({
    tableNumber: {
       type: String,
       default: 1
+   },
+   qrCodeNumber: {
+      type: Number,
+      required: true,
+      immutable: true
    }
 });
 

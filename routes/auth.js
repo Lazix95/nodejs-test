@@ -7,6 +7,6 @@ const {handleValidationResults} = require('./../utils/validationResultHandler');
 
 router.post('/signup', passwordValidation(), emailValidation(), handleValidationResults, authController.signup, authController.login);
 
-router.post('/login', authController.login);
+router.post('/login',emailValidation(), handleValidationResults, authController.login);
 
 module.exports = router;

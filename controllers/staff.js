@@ -1,6 +1,7 @@
 const Staff = require("./../models/staff");
 const User = require("./../models/user");
 const bcrypt = require("bcryptjs");
+const mailer = require("./../utils/mailer")
 
 exports.getStaff = async (req, res, next) => {
   try {
@@ -20,8 +21,8 @@ exports.postStaff = async (req, res, next) => {
     const fullName = req.body.fullName;
     const email = req.body.email;
     const user = await User.findById(req.userId);
-    const restaurantName = user.restaurantName;
-    const password = await bcrypt.hash("root", 12);
+    const generatedPassword = "root"
+    const password = await bcrypt.hash(generatedPassword, 12);
     
     const checkUser = await User.find({email:email})
     if(checkUser.length > 0) {
@@ -31,12 +32,12 @@ exports.postStaff = async (req, res, next) => {
     }
     const staff = new Staff({
       fullName: fullName,
-      restaurantName: restaurantName,
       email: email,
       password: password,
       restaurantId: restaurantId
     });
     const savedStaff = await staff.save();
+    mailer.sentMail(user.restaurantName, {to: email, subject:'Account Created', text: `Your password is  ${generatedPassword} ,please change it!`, html:`<h1 style="margin: auto;">Welcome To ${user.restaurantName}</h1>` })
     res.status(201).json(savedStaff);
   } catch (err) {
     if (!err.statusCode) err.statusCode = 500;

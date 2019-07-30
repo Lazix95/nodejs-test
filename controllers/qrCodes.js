@@ -1,5 +1,6 @@
 const QRcodes = require('./../models/QRcode');
 const pricing = require('./../utils/pricingPackage');
+const User = require('./../models/user')
 
 exports.getQRcodes = async (req, res, next) => {
    try {
@@ -33,25 +34,35 @@ exports.patchPricingPlan = async (req, res, next) => {
       const userId = req.userId;
       const pricingPlan = req.body.pricingPlan;
       const planToSet = pricing.pricingPackage(parseInt(pricingPlan));
+      const user = await User.findById(userId);
       const qrCodes = await QRcodes.find({user:userId});
       const numberOfCodes = qrCodes.length;
       const qrCodesToSet = [];
       let qrCodesToDelete = null
 
+      if(!user) {
+         const error = new Error('User not found!')
+         error.statusCode = 400;
+         throw error
+      }
+
       if(userId && numberOfCodes < planToSet) {
          for (let i = numberOfCodes; i < planToSet; i++) {
             const qrCode = {
                user: userId,
-               tableNumber: i + 1
+               tableNumber: i + 1,
+               qrCodeNumber: i + 1
             };
             qrCodesToSet.push(qrCode)
          }
-       await QRcodes.insertMany(qrCodesToSet);
+        await QRcodes.insertMany(qrCodesToSet);
       } else if(userId && numberOfCodes > planToSet) {
-         qrCodesToDelete = await QRcodes.find({user:userId}).skip(planToSet)
+        await QRcodes.deleteMany({user: userId, "qrCodeNumber" : { $gt : planToSet } })
       }
+      user.pricingPackage = parseInt(pricingPlan);
+      await user.save()
       const qrCodes2 = await QRcodes.find({user:userId});
-      res.status(200).json({qrCodes2, planToSet: planToSet, qrCodesToDelete})
+      res.status(200).json({qrCodes: qrCodes2, pricingPackage: pricingPlan})
    } catch (err) {
       if (!err.statusCode) err.statusCode = 500;
       if (!err.message) err.message = 'Something Went Wrong';

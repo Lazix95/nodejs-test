@@ -13,23 +13,24 @@ exports.signup = async (req, res, next) => {
       const fullName = req.body.fullName;
       const password = req.body.password;
       const restaurantName = req.body.restaurantName;
-      const pricingPackage = req.body.pricingPackage;
+      const pricingPackage = req.body.pricingPackage || 1;
       const hashedPw = await bcrypt.hash(password, 12);
       const qrCodes = [];
+      console.log('Pricing package = ', pricingPackage)
 
-
-      const user = new User({email, password: hashedPw, fullName, restaurantName});
+      const user = new User({email, password: hashedPw, fullName, restaurantName, pricingPackage});
       const saveUser = await user.save();
 
       if(saveUser._id) {
          for (let i = 0; i < pricing.pricingPackage(parseInt(pricingPackage)); i++) {
             const qrCode = {
                user: saveUser._id,
-               tableNumber: i + 1
+               tableNumber: i + 1,
+               qrCodeNumber: i + 1
             };
             qrCodes.push(qrCode)
          }
-         QRcode.insertMany(qrCodes);
+        await QRcode.insertMany(qrCodes);
          next()
       }
    } catch (err) {
@@ -45,6 +46,7 @@ exports.login = async (req, res, next) => {
       const tokenExpiresIn = 3600; // Time in seconds!
       const email = req.body.email;
       const password = req.body.password;
+      console.log('email ======== >>>>>> ',email)
       let user = await User.findOne({email: email});
 
       if(!user){

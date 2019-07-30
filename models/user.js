@@ -22,6 +22,9 @@ const userSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'QRcode'
    }],
+   pricingPackage: {
+      type: Number
+   },
    products: [{
       type: Schema.Types.ObjectId,
       ref: 'Product'

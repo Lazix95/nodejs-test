@@ -4,15 +4,18 @@ const bcrypt = require('bcryptjs');
 
 exports.getUser = async (req, res, next) => {
   try {
-   let user = await User.findById(req.userId).select('fullName restaurantName _id email');
+   let user = await User.findById(req.userId).select('fullName restaurantName _id email, pricingPackage');
       if(!user){
-        user = await Staff.findById(req.userId).select('fullName restaurantName _id email staff');
+        user = await Staff.findById(req.userId).select('fullName _id email staff restaurantId').populate({path: 'restaurantId', select:'restaurantName'});
+        user.restaurantName = user.restaurantId.restaurantName
+        user.restaurantId = user.restaurantId._id
+        console.log('staff => ',user)
       }
       if (!user) {
          throw new Error('User Not Found!');
       }
       res.status(200).json(user)
-  } catch (error) {
+  } catch (err) {
       if (!err.statusCode) err.statusCode = 500;
       if (!err.message) err.message = 'Something Went Wrong';
       next(err)

@@ -6,8 +6,8 @@ exports.getOrders = async (req, res, next) => {
    try {
       const userId = req.userId;
       const restaurantId = req.restaurantId
-      const orders = await Order.find({user: restaurantId})
-      .populate({path: 'products.product', select:'category name price', populate: {path:'category', model:'Category', select: 'name'}});
+      const orders = await Order.find({user: restaurantId}).populate({path: 'products.product', select:'category name price', populate: {path:'category', model:'Category', select: 'name'}}).sort({'accepted': -1})
+      
       res.status(200).json(orders)
    } catch (err) {
       if (!err.statusCode) err.statusCode = 500;
@@ -70,7 +70,7 @@ exports.patchOrder = async (req, res, next) => {
         acceptedOrder = await Order.findById(orderId)
         .populate({path: 'products.product', select:'category name price', populate: {path:'category', model:'Category', select: 'name'}});
      }
-     io.getIO().sockets.in(restaurantId).emit('orderAccepted', {acceptedOrder: acceptedOrder, reqOrder: order, deleted: deleted});
+     io.getIO().sockets.in(restaurantId).emit('orderAccepted', {acceptedOrder: acceptedOrder, reqOrder: order, isOrderDeleted: deleted});
       res.status(200).json(acceptedOrder)
    } catch (err) {
       if (!err.statusCode) err.statusCode = 500;
